@@ -24,7 +24,13 @@ class SeedanceAPI:
 
     def text_to_video(self, prompt, aspect_ratio="16:9", duration=5, quality="basic"):
         """
-        Submits a text-to-video (T2V) generation task.
+        Submits a Seedance 2.0 Text-to-Video (T2V) generation task.
+        
+        :param prompt: The text prompt describing the video.
+        :param aspect_ratio: Video aspect ratio (e.g., '16:9', '9:16').
+        :param duration: Video duration in seconds.
+        :param quality: Output quality ('basic' or 'high').
+        :return: JSON response from the Seedance 2.0 API.
         """
         endpoint = f"{self.base_url}/seedance-v2.0-t2v"
         payload = {
@@ -37,8 +43,14 @@ class SeedanceAPI:
 
     def image_to_video(self, prompt, images_list, aspect_ratio="16:9", duration=5, quality="basic"):
         """
-        Submits an image-to-video (I2V) generation task.
+        Submits a Seedance 2.0 Image-to-Video (I2V) generation task.
+        
+        :param prompt: Optional text prompt to guide the animation.
         :param images_list: A list of image URLs to animate.
+        :param aspect_ratio: Video aspect ratio.
+        :param duration: Video duration.
+        :param quality: Output quality.
+        :return: JSON response from the Seedance 2.0 API.
         """
         endpoint = f"{self.base_url}/seedance-v2.0-i2v"
         payload = {
@@ -52,7 +64,11 @@ class SeedanceAPI:
 
     def extend_video(self, request_id, prompt="", duration=5, quality="basic"):
         """
-        Extends a previously generated video.
+        Extends a previously generated Seedance 2.0 video.
+        
+        :param request_id: The ID of the video segment to extend.
+        :param prompt: Optional text prompt for the extension.
+        :return: JSON response from the Seedance 2.0 API.
         """
         endpoint = f"{self.base_url}/seedance-v2.0-extend"
         payload = {
