@@ -22,7 +22,7 @@ Seedance 2.0 is the industry-leading **Sora alternative** developed by ByteDance
 - ✅ **Seedance 2.0 Text-to-Video (T2V)**: Transform complex descriptive prompts into stunning AI video clips.
 - ✅ **Seedance 2.0 Image-to-Video (I2V)**: Animate any static image with precise motion control using `images_list`.
 - ✅ **Seedance 2.0 Omni-Reference**: Condition a video on any combination of image, video, and audio references in one request.
-- ✅ **Seedance 2.0 Character**: Generate a reusable fictional character sheet from reference photos and reference it inline in any prompt.
+- ✅ **Seedance 2.0 Character**: Generate a multi-panel character sheet (front, back, side, action pose, expressions) from 1–3 reference photos. Use `@character:<id>` inline in any prompt, or pass the sheet directly as an anchor image for tighter face fidelity via `consistent_video()`.
 - ✅ **Seedance 2.0 Video-Edit**: Edit existing videos using text prompts and reference images for stylized results.
 - ✅ **Video Extension**: Seamlessly extend existing clips while maintaining consistent style and characters.
 - ✅ **High-Resolution Output**: Support for `basic` and `high` (2K) quality settings.
@@ -128,10 +128,19 @@ curl --location --request POST "https://api.muapi.ai/api/v1/seedance-2.0-omni-re
   }'
 ```
 
-### 4. Seedance 2.0 Character (Reusable Character Sheets)
+### 4. Seedance 2.0 Character (Consistent Character Sheets)
 **Endpoint**: `POST https://api.muapi.ai/api/v1/seedance-2-character`
 
-Create a fictional character from real reference photos. Once the character sheet is generated you can reference it in any T2V, I2V, or Omni-Reference prompt using `@character:<request_id>`.
+Create a multi-panel character sheet (front, back, side profile, action pose, facial expressions, accessories) at 4K / 21:9 from 1–3 reference photos of a real person.
+
+Once the sheet is generated you can use it two ways:
+- **`@character:<request_id>`** inline in any T2V, I2V, or Omni-Reference prompt
+- Pass `outputs[0]` (the sheet image URL) directly as `@image1` in an I2V request for tighter face fidelity
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `images_list` | array of URLs | Yes | 1–3 photos of the reference person |
+| `prompt` | string | Yes | Desired outfit/style for the character |
 
 ```bash
 curl --location --request POST "https://api.muapi.ai/api/v1/seedance-2-character" \
@@ -139,10 +148,13 @@ curl --location --request POST "https://api.muapi.ai/api/v1/seedance-2-character
   --header "x-api-key: YOUR_API_KEY" \
   --data-raw '{
       "images_list": ["https://example.com/person.jpg"],
-      "outfit_description": "cyberpunk jacket with neon accents",
-      "character_name": "Nova"
+      "prompt": "cyberpunk jacket with neon accents"
   }'
 ```
+
+**Cost:** $0.18 per character sheet
+
+For a full guide including the direct sheet-anchored I2V workflow, see [CHARACTER_CONSISTENCY.md](CHARACTER_CONSISTENCY.md).
 
 ### 5. Seedance 2.0 Video-Edit
 **Endpoint**: `POST https://api.muapi.ai/api/v1/seedance-v2.0-video-edit`
@@ -162,43 +174,66 @@ curl --location --request POST "https://api.muapi.ai/api/v1/seedance-v2.0-video-
 
 ---
 
-## 🎭 Character Workflow
+## 🎭 Character Consistency Workflow
 
-Create a reusable fictional character from reference photos and inject it into any video prompt using `@character:<id>`.
+Create a fictional character from reference photos and maintain their identity across multiple video scenes.
+
+Two approaches are available — see [CHARACTER_CONSISTENCY.md](CHARACTER_CONSISTENCY.md) for a full guide.
+
+### Option A — `@character:<id>` inline (simplest)
 
 ```python
 from seedance_api import SeedanceAPI
 api = SeedanceAPI()
 
-# Step 1 — generate a character sheet
+# Step 1 — generate a character sheet (1–3 reference photos)
 char = api.create_character(
     images_list=["https://example.com/person.jpg"],
     outfit_description="cyberpunk jacket with neon accents, glowing visor",
-    character_name="Nova"
 )
 char_id = char["request_id"]
-print(f"Character ID: {char_id}")
 api.wait_for_completion(char_id)  # wait for sheet to render
 
-# Step 2 — use the character in a T2V prompt
+# Step 2 — reference the character inline in any prompt
 video = api.text_to_video(
-    prompt=f"@character:{char_id} rides a motorcycle through a neon-lit city at night, cinematic",
+    prompt=f"@character:{char_id} rides a motorcycle through a neon-lit city at night",
     aspect_ratio="16:9",
     duration=5,
 )
 result = api.wait_for_completion(video["request_id"])
-print(f"Video: {result['url']}")
+print(f"Video: {result['outputs'][0]}")
 
-# Multi-character example
+# Multiple characters in one prompt
 char2_id = "another-completed-character-request-id"
 video2 = api.text_to_video(
-    prompt=f"@character:{char_id} and @character:{char2_id} face off in a neon-lit arena, dramatic camera angles",
+    prompt=f"@character:{char_id} and @character:{char2_id} face off in a neon-lit arena",
     aspect_ratio="16:9",
     duration=5,
 )
 ```
 
-> **Tip**: `@character:<id>` works in T2V, I2V, and Omni-Reference prompts. Multiple characters can be referenced in a single prompt.
+### Option B — `consistent_video()` (tighter face fidelity)
+
+Pass the character sheet directly as the anchor image for Image-to-Video generation.
+
+```python
+# Get the sheet URL after character creation
+sheet_result = api.wait_for_completion(char_id)
+sheet_url = sheet_result["outputs"][0]
+
+# Generate with the sheet as anchor
+video = api.consistent_video(
+    sheet_url=sheet_url,
+    prompt="@image1 draws their weapon in slow motion, dramatic lighting",
+    aspect_ratio="16:9",
+    duration=5,
+    quality="high",
+)
+result = api.wait_for_completion(video["request_id"])
+print(f"Video: {result['outputs'][0]}")
+```
+
+> **Tip**: `@character:<id>` works in T2V, I2V, and Omni-Reference prompts. Use `consistent_video()` when face similarity is critical.
 
 ---
 
@@ -211,7 +246,8 @@ For a comprehensive walkthrough, check out the **[Seedance 2.0 API: Complete Dev
 | `text_to_video` | `prompt`, `aspect_ratio`, `duration`, `quality` | Generate video from text. Supports `@character:<id>` in prompt. |
 | `image_to_video` | `prompt`, `images_list`, `aspect_ratio`, `duration`, `quality` | Animate images. Supports `@image1`/`@character:<id>` in prompt. |
 | `omni_reference` | `prompt`, `aspect_ratio`, `duration`, `images_list`, `video_files`, `audio_files` | Multi-modal reference video generation. |
-| `create_character` | `images_list`, `outfit_description`, `character_name` | Create a reusable fictional character sheet from reference photos. |
+| `create_character` | `images_list` (1–3), `outfit_description`, `character_name` | Generate a 4K character sheet from reference photos. Returns `request_id`; `outputs[0]` is the sheet URL. |
+| `consistent_video` | `sheet_url`, `prompt`, `aspect_ratio`, `duration`, `quality`, `extra_images` | I2V with the character sheet as anchor (`@image1`). Tighter face fidelity than `@character:<id>`. |
 | `video_edit` | `prompt`, `video_urls`, `images_list`, `aspect_ratio`, `quality`, `remove_watermark` | Edit existing videos with prompts and images. |
 | `extend_video` | `request_id`, `prompt`, `duration`, `quality` | Extend an existing Seedance video segment. |
 | `get_result` | `request_id` | Check task status for the Seedance API. |

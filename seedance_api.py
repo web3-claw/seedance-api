@@ -103,15 +103,21 @@ class SeedanceAPI:
         """
         Creates a reusable fictional character sheet from reference photos.
 
-        Upload 1–5 images of a real person along with an outfit/style description.
-        The API returns a request_id — once completed, the character can be referenced
-        inline in any T2V, I2V, or Omni-Reference prompt using @character:<request_id>.
+        Upload 1–3 images of a real person along with an outfit/style description.
+        The API renders a structured character sheet (front, back, side profile, action pose,
+        facial expressions, accessories) at 4K / 21:9 and returns a request_id.
 
-        :param images_list: List of image URLs showing the reference person (1–5 images).
+        Once completed the character can be:
+          - Referenced inline in any T2V, I2V, or Omni-Reference prompt using
+            ``@character:<request_id>``
+          - Used directly as the anchor image in consistent_video() for tighter
+            face/identity preservation
+
+        :param images_list: List of 1–3 image URLs of the reference person
+                            (clear, well-lit frontal/3/4-angle shots work best).
         :param outfit_description: Description of the desired outfit/style for the character.
         :param character_name: Optional display name for the character.
-        :return: JSON response with request_id. Poll wait_for_completion() and use
-                 the returned request_id as @character:<id> in future prompts.
+        :return: JSON response with request_id. Poll wait_for_completion() before use.
 
         Example workflow::
 
@@ -119,28 +125,94 @@ class SeedanceAPI:
             char = api.create_character(
                 images_list=["https://example.com/person.jpg"],
                 outfit_description="cyberpunk jacket with neon accents",
-                character_name="Nova"
             )
             char_id = char["request_id"]
-            api.wait_for_completion(char_id)   # wait for sheet to render
+            sheet_result = api.wait_for_completion(char_id)
+            sheet_url = sheet_result["outputs"][0]   # character sheet image URL
 
-            # Step 2 — use the character in a video
+            # Step 2a — use @character:<id> inline in T2V
             video = api.text_to_video(
-                prompt=f"@character:{char_id} rides a motorcycle through a neon-lit city at night",
+                prompt=f"@character:{char_id} rides a motorcycle through a neon-lit city",
+                aspect_ratio="16:9",
+                duration=5,
+            )
+
+            # Step 2b — OR use consistent_video() for direct sheet-anchored I2V
+            video = api.consistent_video(
+                sheet_url=sheet_url,
+                prompt="@image1 rides a motorcycle through a neon-lit city at night",
                 aspect_ratio="16:9",
                 duration=5,
             )
             result = api.wait_for_completion(video["request_id"])
-            print(result["url"])
+            print(result["outputs"][0])
         """
         endpoint = f"{self.base_url}/seedance-2-character"
         payload = {
             "images_list": images_list,
-            "outfit_description": outfit_description,
+            "prompt": outfit_description,
         }
         if character_name:
             payload["character_name"] = character_name
         return self._post_request(endpoint, payload)
+
+    def consistent_video(self, sheet_url, prompt, aspect_ratio="16:9", duration=5,
+                         quality="basic", extra_images=None):
+        """
+        Generate a video with consistent character identity by anchoring on a
+        character sheet produced by create_character().
+
+        The sheet is passed as the first reference image (``@image1``) in an
+        Image-to-Video request. Use ``@image1`` in the prompt to refer to the
+        character — it is automatically prepended if omitted.
+
+        :param sheet_url: URL of the character sheet image (from wait_for_completion()
+                          on a create_character() request — ``result["outputs"][0]``).
+        :param prompt: Scene description. Use ``@image1`` to address the character,
+                       ``@image2``/``@image3`` for any extra scene images.
+                       Example: ``"@image1 walks through a neon-lit city at night"``
+        :param aspect_ratio: Video aspect ratio (16:9 / 9:16 / 4:3 / 3:4).
+        :param duration: 5 / 10 / 15 seconds.
+        :param quality: ``"basic"`` or ``"high"`` (2K).
+        :param extra_images: Optional list of additional scene/background image URLs
+                             (referenced as @image2, @image3 in the prompt).
+        :return: JSON response with request_id.
+
+        Example::
+
+            char = api.create_character(
+                images_list=["https://example.com/person.jpg"],
+                outfit_description="samurai armour with gold trim",
+            )
+            char_id = char["request_id"]
+            sheet_result = api.wait_for_completion(char_id)
+            sheet_url = sheet_result["outputs"][0]
+
+            video = api.consistent_video(
+                sheet_url=sheet_url,
+                prompt="@image1 draws their katana in slow motion, dramatic lighting",
+                aspect_ratio="16:9",
+                duration=5,
+                quality="high",
+            )
+            result = api.wait_for_completion(video["request_id"])
+            print(result["outputs"][0])
+        """
+        images_list = [sheet_url]
+        if extra_images:
+            images_list.extend(extra_images)
+
+        # Ensure the prompt references @image1 so the model anchors on the sheet
+        if "@image1" not in prompt:
+            prompt = f"@image1 {prompt.strip()}"
+
+        return self.image_to_video(
+            prompt=prompt,
+            images_list=images_list,
+            aspect_ratio=aspect_ratio,
+            duration=duration,
+            quality=quality,
+        )
 
     def extend_video(self, request_id, prompt="", duration=5, quality="basic"):
         """
