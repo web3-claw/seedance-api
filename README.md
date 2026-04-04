@@ -49,6 +49,23 @@ MUAPI_API_KEY=your_muapi_api_key_here
 
 ---
 
+## 🤖 Seedance 2.0 MCP Server (New!)
+
+You can now use Seedance 2.0 as an **MCP (Model Context Protocol)** server. This allows AI models (like Claude Desktop or Cursor) to directly invoke Seedance tools.
+
+### Running the MCP Server
+1. Ensure `MUAPI_API_KEY` is set in your environment.
+2. Run the server:
+   ```bash
+   python3 mcp_server.py
+   ```
+3. To test with the MCP Inspector:
+   ```bash
+   npx -y @modelcontextprotocol/inspector python3 mcp_server.py
+   ```
+
+---
+
 ## 💻 Quick Start with Seedance 2.0 API (Python)
 
 ```python
@@ -243,12 +260,16 @@ For a comprehensive walkthrough, check out the **[Seedance 2.0 API: Complete Dev
 
 | Method | Parameters | Description |
 | :--- | :--- | :--- |
-| `text_to_video` | `prompt`, `aspect_ratio`, `duration`, `quality` | Generate video from text. Supports `@character:<id>` in prompt. |
-| `image_to_video` | `prompt`, `images_list`, `aspect_ratio`, `duration`, `quality` | Animate images. Supports `@image1`/`@character:<id>` in prompt. |
-| `omni_reference` | `prompt`, `aspect_ratio`, `duration`, `images_list`, `video_files`, `audio_files` | Multi-modal reference video generation. |
+| `text_to_video` | `prompt`, `aspect_ratio`, `duration`, `quality`, `remove_watermark` | Generate video from text. Supports `@character:<id>` in prompt. |
+| `image_to_video` | `prompt`, `images_list`, `aspect_ratio`, `duration`, `quality`, `remove_watermark` | Animate images. Supports `@image1`/`@character:<id>` in prompt. |
+| `omni_reference` | `prompt`, `aspect_ratio`, `duration`, `quality`, `images_list`, `video_files`, `audio_files` | Multi-modal reference video generation. |
 | `create_character` | `images_list` (1–3), `outfit_description`, `character_name` | Generate a 4K character sheet from reference photos. Returns `request_id`; `outputs[0]` is the sheet URL. |
 | `consistent_video` | `sheet_url`, `prompt`, `aspect_ratio`, `duration`, `quality`, `extra_images` | I2V with the character sheet as anchor (`@image1`). Tighter face fidelity than `@character:<id>`. |
 | `video_edit` | `prompt`, `video_urls`, `images_list`, `aspect_ratio`, `quality`, `remove_watermark` | Edit existing videos with prompts and images. |
+| `watermark_remover`| `video_url` | Remove MuAPI watermark from a Seedance video. |
+| `watermark_remover_pro`| `video_url` | Remove MuAPI watermark from a Seedance video (Pro version). |
+| `text_to_video_480p`| `prompt`, `aspect_ratio`, `duration`, `quality` | Generate a 480p video from text (faster/cheaper). |
+| `image_to_video_480p`| `prompt`, `images_list`, `aspect_ratio`, `duration`, `quality` | Generate a 480p video from an image (faster/cheaper). |
 | `extend_video` | `request_id`, `prompt`, `duration`, `quality` | Extend an existing Seedance video segment. |
 | `get_result` | `request_id` | Check task status for the Seedance API. |
 | `wait_for_completion` | `request_id`, `poll_interval`, `timeout` | Blocking helper for Seedance generation tasks. |
