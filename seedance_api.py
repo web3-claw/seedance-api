@@ -22,7 +22,7 @@ class SeedanceAPI:
             "Content-Type": "application/json"
         }
 
-    def text_to_video(self, prompt, aspect_ratio="16:9", duration=5, quality="basic"):
+    def text_to_video(self, prompt, aspect_ratio="16:9", duration=5, quality="basic", remove_watermark=False):
         """
         Submits a Seedance 2.0 Text-to-Video (T2V) generation task.
 
@@ -33,6 +33,7 @@ class SeedanceAPI:
         :param aspect_ratio: Video aspect ratio (e.g., '16:9', '9:16').
         :param duration: Video duration in seconds.
         :param quality: Output quality ('basic' or 'high').
+        :param remove_watermark: Whether to remove the watermark.
         :return: JSON response from the Seedance 2.0 API.
         """
         endpoint = f"{self.base_url}/seedance-v2.0-t2v"
@@ -40,11 +41,12 @@ class SeedanceAPI:
             "prompt": prompt,
             "aspect_ratio": aspect_ratio,
             "duration": duration,
-            "quality": quality
+            "quality": quality,
+            "remove_watermark": remove_watermark
         }
         return self._post_request(endpoint, payload)
 
-    def image_to_video(self, prompt, images_list, aspect_ratio="16:9", duration=5, quality="basic"):
+    def image_to_video(self, prompt, images_list, aspect_ratio="16:9", duration=5, quality="basic", remove_watermark=False):
         """
         Submits a Seedance 2.0 Image-to-Video (I2V) generation task.
 
@@ -56,6 +58,7 @@ class SeedanceAPI:
         :param aspect_ratio: Video aspect ratio.
         :param duration: Video duration.
         :param quality: Output quality.
+        :param remove_watermark: Whether to remove the watermark.
         :return: JSON response from the Seedance 2.0 API.
         """
         endpoint = f"{self.base_url}/seedance-v2.0-i2v"
@@ -64,11 +67,12 @@ class SeedanceAPI:
             "images_list": images_list,
             "aspect_ratio": aspect_ratio,
             "duration": duration,
-            "quality": quality
+            "quality": quality,
+            "remove_watermark": remove_watermark
         }
         return self._post_request(endpoint, payload)
 
-    def omni_reference(self, prompt, aspect_ratio="16:9", duration=5,
+    def omni_reference(self, prompt, aspect_ratio="16:9", duration=5, quality="basic",
                         images_list=None, video_files=None, audio_files=None):
         """
         Submits a Seedance 2.0 Omni-Reference generation task.
@@ -80,6 +84,7 @@ class SeedanceAPI:
         :param prompt: Text prompt describing the video. Supports @character:<id> syntax.
         :param aspect_ratio: Video aspect ratio (e.g., '16:9', '9:16').
         :param duration: Video duration in seconds (minimum 4 s for video references).
+        :param quality: Output quality ('basic' or 'high').
         :param images_list: Optional list of image URLs to condition on.
         :param video_files: Optional list of video URLs to condition on.
         :param audio_files: Optional list of audio URLs to condition on.
@@ -90,6 +95,7 @@ class SeedanceAPI:
             "prompt": prompt,
             "aspect_ratio": aspect_ratio,
             "duration": duration,
+            "quality": quality,
         }
         if images_list:
             payload["images_list"] = images_list
@@ -251,6 +257,72 @@ class SeedanceAPI:
             "aspect_ratio": aspect_ratio,
             "quality": quality,
             "remove_watermark": remove_watermark
+        }
+        return self._post_request(endpoint, payload)
+
+    def watermark_remover(self, video_url):
+        """
+        Removes watermark from a Seedance video.
+        
+        :param video_url: URL of the video to process.
+        :return: JSON response from the Seedance 2.0 API.
+        """
+        endpoint = f"{self.base_url}/seedance-2.0-watermark-remover"
+        payload = {
+            "video_url": video_url
+        }
+        return self._post_request(endpoint, payload)
+
+    def watermark_remover_pro(self, video_url):
+        """
+        Removes watermark from a Seedance video (Pro version).
+        
+        :param video_url: URL of the video to process.
+        :return: JSON response from the Seedance 2.0 API.
+        """
+        endpoint = f"{self.base_url}/seedance-2-video-watermark-remover-pro"
+        payload = {
+            "video_url": video_url
+        }
+        return self._post_request(endpoint, payload)
+
+    def text_to_video_480p(self, prompt, aspect_ratio="16:9", duration=5, quality="basic"):
+        """
+        Submits a Seedance 2.0 Text-to-Video (T2V) 480p task.
+        
+        :param prompt: Descriptive text prompt.
+        :param aspect_ratio: Video aspect ratio.
+        :param duration: Video duration.
+        :param quality: Output quality.
+        :return: JSON response from the Seedance 2.0 API.
+        """
+        endpoint = f"{self.base_url}/seedance-2.0-t2v-480p"
+        payload = {
+            "prompt": prompt,
+            "aspect_ratio": aspect_ratio,
+            "duration": duration,
+            "quality": quality
+        }
+        return self._post_request(endpoint, payload)
+
+    def image_to_video_480p(self, prompt, images_list, aspect_ratio="16:9", duration=5, quality="basic"):
+        """
+        Submits a Seedance 2.0 Image-to-Video (I2V) 480p task.
+        
+        :param prompt: Text prompt to guide the animation.
+        :param images_list: List of image URLs.
+        :param aspect_ratio: Video aspect ratio.
+        :param duration: Video duration.
+        :param quality: Output quality.
+        :return: JSON response from the Seedance 2.0 API.
+        """
+        endpoint = f"{self.base_url}/seedance-2.0-i2v-480p"
+        payload = {
+            "prompt": prompt,
+            "images_list": images_list,
+            "aspect_ratio": aspect_ratio,
+            "duration": duration,
+            "quality": quality
         }
         return self._post_request(endpoint, payload)
 
