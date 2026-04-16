@@ -7,6 +7,8 @@
 
 The most comprehensive Python wrapper for the **Seedance 2.0 API** (developed by ByteDance), delivered via [muapi.ai](https://muapi.ai). Generate cinematic, high-fidelity AI videos from text prompts and static images with the world's most advanced video generation model.
 
+Join the subreddit https://www.reddit.com/r/Seedance_2_API/ for discussions on using Seedance 2 api
+
 Here is a comprehensive guide on using Seedance 2.0 API https://medium.com/@anilmatcha/seedance-2-0-api-complete-developer-guide-text-to-video-image-to-video-python-sdk-1479f5e5491f
 
 > 🌊 **Also explore these top AI video models:**
