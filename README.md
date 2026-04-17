@@ -32,6 +32,8 @@ Seedance 2.0 is the industry-leading **Sora alternative** developed by ByteDance
 - ✅ **Seedance 2.0 Character**: Generate a multi-panel character sheet (front, back, side, action pose, expressions) from 1–3 reference photos. Use `@character:<id>` inline in any prompt, or pass the sheet directly as an anchor image for tighter face fidelity via `consistent_video()`.
 - ✅ **Seedance 2.0 Video-Edit**: Edit existing videos using text prompts and reference images for stylized results.
 - ✅ **File Upload**: Directly upload local images and videos using the `upload_file` method, supporting seamless use in generation tasks.
+- ✅ **Seedance 2 VIP 1080p Text-to-Video**: Generate full 1080p videos from text with VIP priority queue and low censorship. *(Coming Soon)*
+- ✅ **Seedance 2 VIP 1080p Image-to-Video**: Animate images to full 1080p with VIP priority queue and low censorship. *(Coming Soon)*
 - ✅ **Video Extension**: Seamlessly extend existing clips while maintaining consistent style and characters.
 - ✅ **High-Resolution Output**: Support for `basic` and `high` (2K) quality settings.
 - ✅ **Flexible Aspect Ratios**: Optimized for `16:9`, `9:16` (TikTok/Reels), `4:3`, and `3:4`.
@@ -287,6 +289,10 @@ For a comprehensive walkthrough, check out the **[Seedance 2.0 API: Complete Dev
 | `image_to_video_480p`| `prompt`, `images_list`, `aspect_ratio`, `duration`, `quality` | Generate a 480p video from an image (faster/cheaper). |
 | `extend_video` | `request_id`, `prompt`, `duration`, `quality` | Extend an existing Seedance video segment. |
 | `upload_file` | `file_path` | Upload a local file (image or video) to MuAPI for use in generation tasks. |
+| `vip_text_to_video_1080p` | `prompt`, `aspect_ratio`, `duration` | VIP 1080p text-to-video — priority queue, low censorship. *(Coming Soon)* |
+| `vip_text_to_video_fast_1080p` | `prompt`, `aspect_ratio`, `duration` | VIP 1080p fast text-to-video — fastest 1080p T2V with priority queue. *(Coming Soon)* |
+| `vip_image_to_video_1080p` | `prompt`, `images_list`, `aspect_ratio`, `duration` | VIP 1080p image-to-video — priority queue, low censorship. *(Coming Soon)* |
+| `vip_image_to_video_fast_1080p` | `prompt`, `images_list`, `aspect_ratio`, `duration` | VIP 1080p fast image-to-video — fastest 1080p I2V with priority queue. *(Coming Soon)* |
 | `get_result` | `request_id` | Check task status for the Seedance API. |
 | `wait_for_completion` | `request_id`, `poll_interval`, `timeout` | Blocking helper for Seedance generation tasks. |
 
